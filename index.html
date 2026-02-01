@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário Familiar - Protótipos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+        .card .number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .card p {
+            color: #6b7280;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .card .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .card .tag {
+            background: #f3f4f6;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #4b5563;
+        }
+        .card .tag.pro {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .card .tag.con {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .card a {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .card a:hover {
+            opacity: 0.9;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        .footer a {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Calendário Familiar</h1>
+        <p class="subtitle">5 protótipos visuais para organização familiar</p>
+        
+        <div class="grid">
+            <div class="card">
+                <h2><span class="number">1</span>Timeline Swim Lanes</h2>
+                <p>Linhas horizontais por pessoa. Eventos como barras contínuas. Ideal para ver sobreposições e quem está onde.</p>
+                <div class="tags">
+                    <span class="tag pro">✓ Por pessoa</span>
+                    <span class="tag pro">✓ Overlap visual</span>
+                    <span class="tag con">✗ Mobile difícil</span>
+                </div>
+                <a href="visual1.html">Ver Protótipo →</a>
+            </div>
+
+            <div class="card">
+                <h2><span class="number">2</span>Grade Semanal</h2>
+                <p>Clássico grid de calendário com eventos como pills coloridos. Familiar para todos, inspirado no Google Calendar.</p>
+                <div class="tags">
+                    <span class="tag pro">✓ Familiar</span>
+                    <span class="tag pro">✓ Horários claros</span>
+                    <span class="tag con">✗ Fica lotado</span>
+                </div>
+                <a href="visual2.html">Ver Protótipo →</a>
+            </div>
+
+            <div class="card">
+                <h2><span class="number">3</span>Lista Agenda</h2>
+                <p>Lista vertical por dia. Detalhes ricos por evento. Perfeito para mobile e "o que vem aí".</p>
+                <div class="tags">
+                    <span class="tag pro">✓ Mobile-first</span>
+                    <span class="tag pro">✓ Detalhado</span>
+                    <span class="tag con">✗ Sem visão geral</span>
+                </div>
+                <a href="visual3.html">Ver Protótipo →</a>
+            </div>
+
+            <div class="card">
+                <h2><span class="number">4</span>Híbrido</h2>
+                <p>Mini calendário + detalhe do dia selecionado. Melhor dos dois mundos: overview + drill-down.</p>
+                <div class="tags">
+                    <span class="tag pro">✓ Contexto</span>
+                    <span class="tag pro">✓ Filtro lateral</span>
+                    <span class="tag con">✗ Mais complexo</span>
+                </div>
+                <a href="visual4.html">Ver Protótipo →</a>
+            </div>
+
+            <div class="card">
+                <h2><span class="number">5</span>Kanban Colunas</h2>
+                <p>Cards empilhados por dia, estilo Trello. Visual density clara, bom para scanning rápido.</p>
+                <div class="tags">
+                    <span class="tag pro">✓ Scannable</span>
+                    <span class="tag pro">✓ Drag-ready</span>
+                    <span class="tag con">✗ Sem horários</span>
+                </div>
+                <a href="visual5.html">Ver Protótipo →</a>
+            </div>
+        </div>
+
+        <p class="footer">
+            MVP Calendário Familiar · <a href="https://github.com/rpeo/barbara-calendar">GitHub</a>
+        </p>
+    </div>
+</body>
+</html>

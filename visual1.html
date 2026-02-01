@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual 1: Timeline Swim Lanes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            color: #1f2937;
+        }
+        .header a {
+            color: #6366f1;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .filters {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            color: white;
+        }
+        .filter-btn:not(.active) {
+            background: white;
+            opacity: 0.5;
+        }
+        .timeline-container {
+            padding: 24px;
+            overflow-x: auto;
+        }
+        .timeline {
+            min-width: 1000px;
+        }
+        .timeline-header {
+            display: grid;
+            grid-template-columns: 120px repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 4px;
+        }
+        .timeline-header .day {
+            text-align: center;
+            padding: 12px 8px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .timeline-header .day.today {
+            background: #6366f1;
+            color: white;
+        }
+        .timeline-header .day .date {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .timeline-header .day .weekday {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        .swim-lane {
+            display: grid;
+            grid-template-columns: 120px repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 2px;
+        }
+        .swim-lane.hidden {
+            display: none;
+        }
+        .person-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .person-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .day-cell {
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 80px;
+            position: relative;
+        }
+        .event-bar {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: white;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-bar.recurring {
+            opacity: 0.85;
+        }
+        .event-bar .time {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+        .event-bar .icon {
+            margin-right: 4px;
+        }
+        .legend {
+            padding: 16px 24px;
+            display: flex;
+            gap: 24px;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Timeline Swim Lanes</h1>
+        <a href="index.html">← Voltar</a>
+    </div>
+    
+    <div class="filters" id="filters"></div>
+    
+    <div class="timeline-container">
+        <div class="timeline">
+            <div class="timeline-header" id="timeline-header"></div>
+            <div id="swim-lanes"></div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <span>🔁 Recorrente</span>
+        <span>📍 Único</span>
+    </div>
+
+    <script>
+        const DAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+        const DAY_MAP = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+        
+        let eventsData = null;
+        let activeFilters = new Set();
+        
+        async function loadData() {
+            const res = await fetch('data/events.json');
+            eventsData = await res.json();
+            activeFilters = new Set(Object.keys(eventsData.people));
+            render();
+        }
+
+        function getWeekDates() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - dayOfWeek + 1);
+            
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function isEventOnDate(event, date) {
+            const dateStr = formatDate(date);
+            if (event.type === 'one-off') {
+                return event.date === dateStr;
+            } else if (event.type === 'recurring') {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
+                if (!event.recurrence.days.includes(dayName)) return false;
+                if (event.recurrence.start && dateStr < event.recurrence.start) return false;
+                if (event.recurrence.end && dateStr > event.recurrence.end) return false;
+                return true;
+            }
+            return false;
+        }
+
+        function getEventsForPersonOnDate(personId, date) {
+            return eventsData.events.filter(e => 
+                e.people.includes(personId) && isEventOnDate(e, date)
+            ).sort((a, b) => (a.time?.start || '').localeCompare(b.time?.start || ''));
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                school: '#6366f1',
+                activity: '#22c55e',
+                health: '#ef4444',
+                work: '#f59e0b',
+                family: '#ec4899'
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function render() {
+            const weekDates = getWeekDates();
+            const today = formatDate(new Date());
+            
+            // Render filters
+            const filtersEl = document.getElementById('filters');
+            filtersEl.innerHTML = Object.entries(eventsData.people).map(([id, p]) => `
+                <div class="filter-btn ${activeFilters.has(id) ? 'active' : ''}" 
+                     data-person="${id}"
+                     style="border-color: ${p.color}; ${activeFilters.has(id) ? `background: ${p.color}` : ''}">
+                    ${p.emoji} ${p.name}
+                </div>
+            `).join('');
+
+            filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const person = btn.dataset.person;
+                    if (activeFilters.has(person)) {
+                        activeFilters.delete(person);
+                    } else {
+                        activeFilters.add(person);
+                    }
+                    render();
+                });
+            });
+
+            // Render header
+            const headerEl = document.getElementById('timeline-header');
+            headerEl.innerHTML = '<div></div>' + weekDates.map(d => `
+                <div class="day ${formatDate(d) === today ? 'today' : ''}">
+                    <div class="weekday">${DAYS[d.getDay()]}</div>
+                    <div class="date">${d.getDate()}</div>
+                </div>
+            `).join('');
+
+            // Render swim lanes
+            const lanesEl = document.getElementById('swim-lanes');
+            lanesEl.innerHTML = Object.entries(eventsData.people).map(([personId, person]) => `
+                <div class="swim-lane ${activeFilters.has(personId) ? '' : 'hidden'}">
+                    <div class="person-label">
+                        <div class="person-avatar" style="background: ${person.color}">${person.name[0]}</div>
+                        ${person.name}
+                    </div>
+                    ${weekDates.map(date => {
+                        const events = getEventsForPersonOnDate(personId, date);
+                        return `
+                            <div class="day-cell">
+                                ${events.map(e => `
+                                    <div class="event-bar ${e.type}" style="background: ${getCategoryColor(e.category)}">
+                                        <span class="icon">${e.icon}</span>
+                                        ${e.title}
+                                        ${e.time ? `<div class="time">${e.time.start}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `).join('');
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

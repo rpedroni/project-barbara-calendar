@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual 2: Grade Semanal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.25rem; color: #1f2937; }
+        .header a { color: #6366f1; text-decoration: none; font-size: 0.9rem; }
+        .filters {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { color: white; }
+        .filter-btn:not(.active) { background: white; opacity: 0.5; }
+        .calendar-container {
+            padding: 24px;
+            overflow-x: auto;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            min-width: 900px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .calendar-header {
+            display: contents;
+        }
+        .calendar-header > div {
+            padding: 16px 8px;
+            text-align: center;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .calendar-header .today {
+            background: #6366f1;
+            color: white;
+        }
+        .calendar-header .date { font-size: 1.5rem; }
+        .calendar-header .weekday { 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            opacity: 0.7; 
+        }
+        .time-label {
+            padding: 8px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-align: right;
+            border-right: 1px solid #e5e7eb;
+            background: #fafafa;
+        }
+        .time-slot {
+            border-bottom: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            min-height: 60px;
+            padding: 2px;
+            position: relative;
+        }
+        .time-slot:nth-child(7n+1) { border-right: 1px solid #e5e7eb; }
+        .event-pill {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .event-pill:hover { transform: scale(1.02); }
+        .event-pill .people {
+            display: flex;
+            gap: 2px;
+            margin-left: auto;
+        }
+        .event-pill .person-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .event-pill.multi-hour {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            z-index: 10;
+        }
+        .legend {
+            padding: 16px 24px;
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Grade Semanal</h1>
+        <a href="index.html">← Voltar</a>
+    </div>
+    
+    <div class="filters" id="filters"></div>
+    
+    <div class="calendar-container">
+        <div class="calendar" id="calendar"></div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background: #6366f1"></div> Escola</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #22c55e"></div> Atividades</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ef4444"></div> Saúde</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #f59e0b"></div> Trabalho</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ec4899"></div> Família</div>
+    </div>
+
+    <script>
+        const DAYS = ['', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+        
+        let eventsData = null;
+        let activeFilters = new Set();
+        
+        async function loadData() {
+            const res = await fetch('data/events.json');
+            eventsData = await res.json();
+            activeFilters = new Set(Object.keys(eventsData.people));
+            render();
+        }
+
+        function getWeekDates() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - dayOfWeek + 1);
+            
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function isEventOnDate(event, date) {
+            const dateStr = formatDate(date);
+            if (event.type === 'one-off') {
+                return event.date === dateStr;
+            } else if (event.type === 'recurring') {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
+                if (!event.recurrence.days.includes(dayName)) return false;
+                if (event.recurrence.start && dateStr < event.recurrence.start) return false;
+                if (event.recurrence.end && dateStr > event.recurrence.end) return false;
+                return true;
+            }
+            return false;
+        }
+
+        function getEventsForDateAndHour(date, hour) {
+            return eventsData.events.filter(e => {
+                if (!isEventOnDate(e, date)) return false;
+                if (!e.time) return hour === 9; // default time
+                const startHour = parseInt(e.time.start.split(':')[0]);
+                return startHour === hour;
+            }).filter(e => e.people.some(p => activeFilters.has(p)));
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                school: '#6366f1',
+                activity: '#22c55e',
+                health: '#ef4444',
+                work: '#f59e0b',
+                family: '#ec4899'
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function render() {
+            const weekDates = getWeekDates();
+            const today = formatDate(new Date());
+            
+            // Render filters
+            const filtersEl = document.getElementById('filters');
+            filtersEl.innerHTML = Object.entries(eventsData.people).map(([id, p]) => `
+                <div class="filter-btn ${activeFilters.has(id) ? 'active' : ''}" 
+                     data-person="${id}"
+                     style="border-color: ${p.color}; ${activeFilters.has(id) ? `background: ${p.color}` : ''}">
+                    ${p.emoji} ${p.name}
+                </div>
+            `).join('');
+
+            filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const person = btn.dataset.person;
+                    if (activeFilters.has(person)) {
+                        activeFilters.delete(person);
+                    } else {
+                        activeFilters.add(person);
+                    }
+                    render();
+                });
+            });
+
+            // Render calendar
+            const calendarEl = document.getElementById('calendar');
+            let html = '<div class="calendar-header">';
+            html += '<div></div>';
+            weekDates.forEach((d, i) => {
+                html += `
+                    <div class="${formatDate(d) === today ? 'today' : ''}">
+                        <div class="weekday">${DAYS[i + 1]}</div>
+                        <div class="date">${d.getDate()}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            HOURS.forEach(hour => {
+                html += `<div class="time-label">${hour}:00</div>`;
+                weekDates.forEach(date => {
+                    const events = getEventsForDateAndHour(date, hour);
+                    html += `<div class="time-slot">`;
+                    events.forEach(e => {
+                        const peopleDots = e.people
+                            .filter(p => activeFilters.has(p))
+                            .map(p => `<div class="person-dot" style="background: ${eventsData.people[p].color}"></div>`)
+                            .join('');
+                        html += `
+                            <div class="event-pill" style="background: ${getCategoryColor(e.category)}">
+                                ${e.icon} ${e.title}
+                                <div class="people">${peopleDots}</div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                });
+            });
+
+            calendarEl.innerHTML = html;
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

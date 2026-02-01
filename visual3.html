@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual 3: Lista Agenda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.25rem; color: #1f2937; }
+        .header a { color: #6366f1; text-decoration: none; font-size: 0.9rem; }
+        .filters {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 57px;
+            z-index: 99;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { color: white; }
+        .filter-btn:not(.active) { background: white; opacity: 0.5; }
+        .agenda-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .day-section {
+            margin-bottom: 32px;
+        }
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 16px;
+            position: sticky;
+            top: 110px;
+            background: #f8fafc;
+            z-index: 10;
+        }
+        .day-header.today {
+            border-bottom-color: #6366f1;
+        }
+        .day-header .date-badge {
+            width: 50px;
+            height: 50px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .day-header.today .date-badge {
+            background: #6366f1;
+            color: white;
+        }
+        .day-header .date-badge .day-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .day-header .date-badge .day-name {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+        .day-header .date-text {
+            font-size: 1.1rem;
+            color: #374151;
+        }
+        .day-header .event-count {
+            margin-left: auto;
+            background: #e5e7eb;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        .event-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+            display: flex;
+            gap: 16px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .event-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .event-time {
+            min-width: 60px;
+            text-align: right;
+        }
+        .event-time .start {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .event-time .end {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        .event-content {
+            flex: 1;
+        }
+        .event-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-title .icon {
+            font-size: 1.2rem;
+        }
+        .event-title .type-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .event-title .type-badge.recurring {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .event-location {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .event-location::before {
+            content: '📍 ';
+        }
+        .event-people {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .person-tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+        }
+        .no-events {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Lista Agenda</h1>
+        <a href="index.html">← Voltar</a>
+    </div>
+    
+    <div class="filters" id="filters"></div>
+    
+    <div class="agenda-container" id="agenda"></div>
+
+    <script>
+        const DAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const DAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        
+        let eventsData = null;
+        let activeFilters = new Set();
+        
+        async function loadData() {
+            const res = await fetch('data/events.json');
+            eventsData = await res.json();
+            activeFilters = new Set(Object.keys(eventsData.people));
+            render();
+        }
+
+        function getWeekDates() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - dayOfWeek + 1);
+            
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function isEventOnDate(event, date) {
+            const dateStr = formatDate(date);
+            if (event.type === 'one-off') {
+                return event.date === dateStr;
+            } else if (event.type === 'recurring') {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
+                if (!event.recurrence.days.includes(dayName)) return false;
+                if (event.recurrence.start && dateStr < event.recurrence.start) return false;
+                if (event.recurrence.end && dateStr > event.recurrence.end) return false;
+                return true;
+            }
+            return false;
+        }
+
+        function getEventsForDate(date) {
+            return eventsData.events
+                .filter(e => isEventOnDate(e, date))
+                .filter(e => e.people.some(p => activeFilters.has(p)))
+                .sort((a, b) => (a.time?.start || '').localeCompare(b.time?.start || ''));
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                school: '#6366f1',
+                activity: '#22c55e',
+                health: '#ef4444',
+                work: '#f59e0b',
+                family: '#ec4899'
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function render() {
+            const weekDates = getWeekDates();
+            const today = formatDate(new Date());
+            
+            // Render filters
+            const filtersEl = document.getElementById('filters');
+            filtersEl.innerHTML = Object.entries(eventsData.people).map(([id, p]) => `
+                <div class="filter-btn ${activeFilters.has(id) ? 'active' : ''}" 
+                     data-person="${id}"
+                     style="border-color: ${p.color}; ${activeFilters.has(id) ? `background: ${p.color}` : ''}">
+                    ${p.emoji} ${p.name}
+                </div>
+            `).join('');
+
+            filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const person = btn.dataset.person;
+                    if (activeFilters.has(person)) {
+                        activeFilters.delete(person);
+                    } else {
+                        activeFilters.add(person);
+                    }
+                    render();
+                });
+            });
+
+            // Render agenda
+            const agendaEl = document.getElementById('agenda');
+            agendaEl.innerHTML = weekDates.map(date => {
+                const dateStr = formatDate(date);
+                const isToday = dateStr === today;
+                const events = getEventsForDate(date);
+
+                return `
+                    <div class="day-section">
+                        <div class="day-header ${isToday ? 'today' : ''}">
+                            <div class="date-badge">
+                                <span class="day-num">${date.getDate()}</span>
+                                <span class="day-name">${DAYS_SHORT[date.getDay()]}</span>
+                            </div>
+                            <span class="date-text">
+                                ${DAYS_PT[date.getDay()]}${isToday ? ' · Hoje' : ''}
+                            </span>
+                            <span class="event-count">${events.length} evento${events.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        ${events.length > 0 ? events.map(e => `
+                            <div class="event-card" style="border-left-color: ${getCategoryColor(e.category)}">
+                                <div class="event-time">
+                                    <div class="start">${e.time?.start || '—'}</div>
+                                    ${e.time?.end ? `<div class="end">${e.time.end}</div>` : ''}
+                                </div>
+                                <div class="event-content">
+                                    <div class="event-title">
+                                        <span class="icon">${e.icon}</span>
+                                        ${e.title}
+                                        <span class="type-badge ${e.type}">${e.type === 'recurring' ? '🔁 Recorrente' : '📍 Único'}</span>
+                                    </div>
+                                    ${e.location ? `<div class="event-location">${e.location}</div>` : ''}
+                                    <div class="event-people">
+                                        ${e.people.filter(p => activeFilters.has(p)).map(p => `
+                                            <span class="person-tag" style="background: ${eventsData.people[p].color}">
+                                                ${eventsData.people[p].name}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="no-events">Nenhum evento</div>'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

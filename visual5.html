@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual 5: Kanban Colunas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.25rem; color: #1f2937; }
+        .header a { color: #6366f1; text-decoration: none; font-size: 0.9rem; }
+        .filters {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { color: white; }
+        .filter-btn:not(.active) { background: white; opacity: 0.5; }
+        .kanban-container {
+            padding: 24px;
+            overflow-x: auto;
+        }
+        .kanban-board {
+            display: flex;
+            gap: 16px;
+            min-width: max-content;
+        }
+        .kanban-column {
+            width: 280px;
+            flex-shrink: 0;
+        }
+        .column-header {
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 16px;
+            border-bottom: 3px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .column-header.today {
+            border-bottom-color: #6366f1;
+        }
+        .column-header .day-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .column-header .day-num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1;
+        }
+        .column-header.today .day-num {
+            color: #6366f1;
+        }
+        .column-header .day-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .column-header .day-text .weekday {
+            font-weight: 600;
+            color: #374151;
+        }
+        .column-header .event-count {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .column-header.today .event-count {
+            background: #6366f1;
+            color: white;
+        }
+        .column-body {
+            background: rgba(255,255,255,0.5);
+            border-radius: 0 0 12px 12px;
+            padding: 12px;
+            min-height: 400px;
+        }
+        .event-card {
+            background: white;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .event-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .event-card .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .event-card .icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        .event-card .title-group {
+            flex: 1;
+        }
+        .event-card .title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        .event-card .time {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        .event-card .type-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #6b7280;
+        }
+        .event-card .type-badge.recurring {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .event-card .location {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .event-card .people {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .person-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .person-name-badge {
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 500;
+        }
+        .empty-column {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+        .empty-column .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .legend {
+            padding: 16px 24px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Kanban Colunas</h1>
+        <a href="index.html">← Voltar</a>
+    </div>
+    
+    <div class="filters" id="filters"></div>
+    
+    <div class="kanban-container">
+        <div class="kanban-board" id="kanban-board"></div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background: #6366f1"></div> Escola</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #22c55e"></div> Atividades</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ef4444"></div> Saúde</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #f59e0b"></div> Trabalho</div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ec4899"></div> Família</div>
+    </div>
+
+    <script>
+        const DAYS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+        const MONTHS_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        
+        let eventsData = null;
+        let activeFilters = new Set();
+        
+        async function loadData() {
+            const res = await fetch('data/events.json');
+            eventsData = await res.json();
+            activeFilters = new Set(Object.keys(eventsData.people));
+            render();
+        }
+
+        function getWeekDates() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - dayOfWeek + 1);
+            
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dates.push(d);
+            }
+            return dates;
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function isEventOnDate(event, date) {
+            const dateStr = formatDate(date);
+            if (event.type === 'one-off') {
+                return event.date === dateStr;
+            } else if (event.type === 'recurring') {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
+                if (!event.recurrence.days.includes(dayName)) return false;
+                if (event.recurrence.start && dateStr < event.recurrence.start) return false;
+                if (event.recurrence.end && dateStr > event.recurrence.end) return false;
+                return true;
+            }
+            return false;
+        }
+
+        function getEventsForDate(date) {
+            return eventsData.events
+                .filter(e => isEventOnDate(e, date))
+                .filter(e => e.people.some(p => activeFilters.has(p)))
+                .sort((a, b) => (a.time?.start || '').localeCompare(b.time?.start || ''));
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                school: '#6366f1',
+                activity: '#22c55e',
+                health: '#ef4444',
+                work: '#f59e0b',
+                family: '#ec4899'
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function render() {
+            const weekDates = getWeekDates();
+            const today = formatDate(new Date());
+            
+            // Render filters
+            const filtersEl = document.getElementById('filters');
+            filtersEl.innerHTML = Object.entries(eventsData.people).map(([id, p]) => `
+                <div class="filter-btn ${activeFilters.has(id) ? 'active' : ''}" 
+                     data-person="${id}"
+                     style="border-color: ${p.color}; ${activeFilters.has(id) ? `background: ${p.color}` : ''}">
+                    ${p.emoji} ${p.name}
+                </div>
+            `).join('');
+
+            filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const person = btn.dataset.person;
+                    if (activeFilters.has(person)) {
+                        activeFilters.delete(person);
+                    } else {
+                        activeFilters.add(person);
+                    }
+                    render();
+                });
+            });
+
+            // Render kanban board
+            const boardEl = document.getElementById('kanban-board');
+            boardEl.innerHTML = weekDates.map(date => {
+                const dateStr = formatDate(date);
+                const isToday = dateStr === today;
+                const events = getEventsForDate(date);
+
+                return `
+                    <div class="kanban-column">
+                        <div class="column-header ${isToday ? 'today' : ''}">
+                            <div class="day-info">
+                                <span class="day-num">${date.getDate()}</span>
+                                <div class="day-text">
+                                    <div class="weekday">${DAYS_PT[date.getDay()]}</div>
+                                    <div>${MONTHS_SHORT[date.getMonth()]}</div>
+                                </div>
+                            </div>
+                            <span class="event-count">${events.length}</span>
+                        </div>
+                        <div class="column-body">
+                            ${events.length === 0 ? `
+                                <div class="empty-column">
+                                    <div class="icon">📭</div>
+                                    <div>Livre</div>
+                                </div>
+                            ` : events.map(e => `
+                                <div class="event-card" style="border-left-color: ${getCategoryColor(e.category)}">
+                                    <div class="card-header">
+                                        <span class="icon">${e.icon}</span>
+                                        <div class="title-group">
+                                            <div class="title">${e.title}</div>
+                                            <div class="time">
+                                                ${e.time ? `${e.time.start}${e.time.end ? ' - ' + e.time.end : ''}` : 'Dia todo'}
+                                            </div>
+                                        </div>
+                                        <span class="type-badge ${e.type}">${e.type === 'recurring' ? '🔁' : '📍'}</span>
+                                    </div>
+                                    ${e.location ? `<div class="location">📍 ${e.location}</div>` : ''}
+                                    <div class="people">
+                                        ${e.people.filter(p => activeFilters.has(p)).map(p => `
+                                            <span class="person-name-badge" style="background: ${eventsData.people[p].color}">
+                                                ${eventsData.people[p].name}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

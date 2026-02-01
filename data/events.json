@@ -1,0 +1,120 @@
+{
+  "people": {
+    "nicolas": { "name": "Nicolas", "color": "#3B82F6", "emoji": "🟦" },
+    "henrique": { "name": "Henrique", "color": "#22C55E", "emoji": "🟩" },
+    "barbara": { "name": "Bárbara", "color": "#A855F7", "emoji": "🟪" },
+    "ricardo": { "name": "Ricardo", "color": "#EAB308", "emoji": "🟨" }
+  },
+  "events": [
+    {
+      "id": "escola",
+      "title": "Escola",
+      "type": "recurring",
+      "recurrence": {
+        "days": ["mon", "tue", "wed", "thu", "fri"],
+        "start": "2026-02-02",
+        "end": "2026-09-15"
+      },
+      "time": { "start": "07:00", "end": "12:00" },
+      "people": ["nicolas", "henrique"],
+      "category": "school",
+      "icon": "🏫"
+    },
+    {
+      "id": "natacao-henrique",
+      "title": "Natação",
+      "type": "recurring",
+      "recurrence": {
+        "days": ["tue", "thu"],
+        "start": "2026-02-02",
+        "end": "2026-12-15"
+      },
+      "time": { "start": "15:00", "end": "16:00" },
+      "people": ["henrique"],
+      "category": "activity",
+      "icon": "🏊"
+    },
+    {
+      "id": "futebol-nicolas",
+      "title": "Futebol",
+      "type": "recurring",
+      "recurrence": {
+        "days": ["mon", "wed"],
+        "start": "2026-02-02",
+        "end": "2026-12-15"
+      },
+      "time": { "start": "14:00", "end": "15:30" },
+      "people": ["nicolas"],
+      "category": "activity",
+      "icon": "⚽"
+    },
+    {
+      "id": "dentista-20260204",
+      "title": "Dentista - Dr. Silva",
+      "type": "one-off",
+      "date": "2026-02-04",
+      "time": { "start": "14:30", "end": "15:30" },
+      "people": ["nicolas", "barbara"],
+      "category": "health",
+      "location": "R. das Flores, 123",
+      "icon": "🦷"
+    },
+    {
+      "id": "reuniao-pais-20260205",
+      "title": "Reunião de Pais",
+      "type": "one-off",
+      "date": "2026-02-05",
+      "time": { "start": "19:00", "end": "20:30" },
+      "people": ["barbara", "ricardo"],
+      "category": "school",
+      "location": "Escola Santo Antônio",
+      "icon": "👨‍👩‍👦"
+    },
+    {
+      "id": "pediatra-20260206",
+      "title": "Pediatra - Dra. Ana",
+      "type": "one-off",
+      "date": "2026-02-06",
+      "time": { "start": "10:00", "end": "11:00" },
+      "people": ["henrique", "barbara"],
+      "category": "health",
+      "location": "Clínica Saúde Kids",
+      "icon": "👨‍⚕️"
+    },
+    {
+      "id": "gravacao-20260203",
+      "title": "Gravação Conteúdo",
+      "type": "one-off",
+      "date": "2026-02-03",
+      "time": { "start": "14:00", "end": "17:00" },
+      "people": ["barbara"],
+      "category": "work",
+      "icon": "📹"
+    },
+    {
+      "id": "aniversario-20260207",
+      "title": "Aniversário Tia Lucia",
+      "type": "one-off",
+      "date": "2026-02-07",
+      "time": { "start": "15:00", "end": "19:00" },
+      "people": ["nicolas", "henrique", "barbara", "ricardo"],
+      "category": "family",
+      "location": "Casa da Tia Lucia",
+      "icon": "🎂"
+    },
+    {
+      "id": "work-ricardo",
+      "title": "Trabalho",
+      "type": "recurring",
+      "recurrence": {
+        "days": ["mon", "tue", "wed", "thu", "fri"],
+        "start": "2026-01-01",
+        "end": "2026-12-31"
+      },
+      "time": { "start": "09:00", "end": "18:00" },
+      "people": ["ricardo"],
+      "category": "work",
+      "icon": "💼"
+    }
+  ]
+}

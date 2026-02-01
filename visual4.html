@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual 4: Híbrido</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.25rem; color: #1f2937; }
+        .header a { color: #6366f1; text-decoration: none; font-size: 0.9rem; }
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; }
+            .sidebar { border-right: none; border-bottom: 1px solid #e5e7eb; }
+        }
+        .sidebar {
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 24px;
+        }
+        .mini-calendar {
+            margin-bottom: 24px;
+        }
+        .mini-calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .mini-calendar-header h2 {
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+        .mini-calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+        .mini-calendar-nav button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .mini-calendar-nav button:hover {
+            background: #e2e8f0;
+        }
+        .mini-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .mini-calendar-grid .weekday {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            padding: 4px;
+            text-transform: uppercase;
+        }
+        .mini-calendar-grid .day {
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+        .mini-calendar-grid .day:hover {
+            background: #f1f5f9;
+        }
+        .mini-calendar-grid .day.other-month {
+            color: #d1d5db;
+        }
+        .mini-calendar-grid .day.today {
+            background: #6366f1;
+            color: white;
+            font-weight: 600;
+        }
+        .mini-calendar-grid .day.selected {
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .mini-calendar-grid .day.today.selected {
+            background: #4f46e5;
+        }
+        .mini-calendar-grid .day.has-events::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #6366f1;
+            border-radius: 50%;
+        }
+        .mini-calendar-grid .day.today.has-events::after {
+            background: white;
+        }
+        .filter-section h3 {
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .filter-item:hover {
+            background: #f8fafc;
+        }
+        .filter-item.inactive {
+            opacity: 0.4;
+        }
+        .filter-item .checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+        }
+        .filter-item .name {
+            flex: 1;
+            font-weight: 500;
+        }
+        .filter-item .count {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        .day-detail {
+            padding: 24px;
+        }
+        .day-detail-header {
+            margin-bottom: 24px;
+        }
+        .day-detail-header h2 {
+            font-size: 1.5rem;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        .day-detail-header .date-full {
+            color: #6b7280;
+        }
+        .time-section {
+            margin-bottom: 24px;
+        }
+        .time-section-header {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 12px;
+        }
+        .event-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: transform 0.1s;
+        }
+        .event-item:hover {
+            transform: translateX(4px);
+        }
+        .event-time-col {
+            min-width: 70px;
+        }
+        .event-time-col .time {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .event-time-col .duration {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        .event-color-bar {
+            width: 4px;
+            border-radius: 2px;
+        }
+        .event-content {
+            flex: 1;
+        }
+        .event-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-type {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            color: #6b7280;
+        }
+        .event-type.recurring {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .event-location {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .event-people {
+            display: flex;
+            gap: 6px;
+        }
+        .person-chip {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 500;
+        }
+        .no-events-msg {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .no-events-msg .icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Híbrido: Mini Calendar + Detalhe</h1>
+        <a href="index.html">← Voltar</a>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="mini-calendar">
+                <div class="mini-calendar-header">
+                    <h2 id="month-title"></h2>
+                    <div class="mini-calendar-nav">
+                        <button id="prev-month">←</button>
+                        <button id="next-month">→</button>
+                    </div>
+                </div>
+                <div class="mini-calendar-grid" id="mini-calendar"></div>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Filtrar por Pessoa</h3>
+                <div class="filter-list" id="filters"></div>
+            </div>
+        </div>
+        
+        <div class="day-detail" id="day-detail"></div>
+    </div>
+
+    <script>
+        const DAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const DAYS_SHORT = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+        const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        
+        let eventsData = null;
+        let activeFilters = new Set();
+        let currentMonth = new Date();
+        let selectedDate = new Date();
+        
+        async function loadData() {
+            const res = await fetch('data/events.json');
+            eventsData = await res.json();
+            activeFilters = new Set(Object.keys(eventsData.people));
+            render();
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function isEventOnDate(event, date) {
+            const dateStr = formatDate(date);
+            if (event.type === 'one-off') {
+                return event.date === dateStr;
+            } else if (event.type === 'recurring') {
+                const dayName = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
+                if (!event.recurrence.days.includes(dayName)) return false;
+                if (event.recurrence.start && dateStr < event.recurrence.start) return false;
+                if (event.recurrence.end && dateStr > event.recurrence.end) return false;
+                return true;
+            }
+            return false;
+        }
+
+        function hasEventsOnDate(date) {
+            return eventsData.events.some(e => 
+                isEventOnDate(e, date) && e.people.some(p => activeFilters.has(p))
+            );
+        }
+
+        function getEventsForDate(date) {
+            return eventsData.events
+                .filter(e => isEventOnDate(e, date))
+                .filter(e => e.people.some(p => activeFilters.has(p)))
+                .sort((a, b) => (a.time?.start || '').localeCompare(b.time?.start || ''));
+        }
+
+        function getEventCountForPerson(personId) {
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+            let count = 0;
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(weekStart.getDate() + i);
+                count += eventsData.events.filter(e => 
+                    e.people.includes(personId) && isEventOnDate(e, d)
+                ).length;
+            }
+            return count;
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                school: '#6366f1',
+                activity: '#22c55e',
+                health: '#ef4444',
+                work: '#f59e0b',
+                family: '#ec4899'
+            };
+            return colors[category] || '#6b7280';
+        }
+
+        function renderMiniCalendar() {
+            const today = formatDate(new Date());
+            const selectedStr = formatDate(selectedDate);
+            
+            document.getElementById('month-title').textContent = 
+                `${MONTHS[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+            
+            const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+            const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+            const startDay = firstDay.getDay();
+            
+            let html = DAYS_SHORT.map(d => `<div class="weekday">${d}</div>`).join('');
+            
+            // Previous month days
+            const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0);
+            for (let i = startDay - 1; i >= 0; i--) {
+                const day = prevMonth.getDate() - i;
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, day);
+                html += `<div class="day other-month" data-date="${formatDate(date)}">${day}</div>`;
+            }
+            
+            // Current month days
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                const dateStr = formatDate(date);
+                const isToday = dateStr === today;
+                const isSelected = dateStr === selectedStr;
+                const hasEvents = hasEventsOnDate(date);
+                
+                let classes = 'day';
+                if (isToday) classes += ' today';
+                if (isSelected) classes += ' selected';
+                if (hasEvents) classes += ' has-events';
+                
+                html += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
+            }
+            
+            // Next month days
+            const remaining = 42 - (startDay + lastDay.getDate());
+            for (let day = 1; day <= remaining; day++) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, day);
+                html += `<div class="day other-month" data-date="${formatDate(date)}">${day}</div>`;
+            }
+            
+            document.getElementById('mini-calendar').innerHTML = html;
+            
+            document.querySelectorAll('.mini-calendar-grid .day').forEach(el => {
+                el.addEventListener('click', () => {
+                    selectedDate = new Date(el.dataset.date + 'T12:00:00');
+                    render();
+                });
+            });
+        }
+
+        function renderFilters() {
+            const filtersEl = document.getElementById('filters');
+            filtersEl.innerHTML = Object.entries(eventsData.people).map(([id, p]) => `
+                <div class="filter-item ${activeFilters.has(id) ? '' : 'inactive'}" data-person="${id}">
+                    <div class="checkbox" style="background: ${activeFilters.has(id) ? p.color : '#e5e7eb'}">
+                        ${activeFilters.has(id) ? '✓' : ''}
+                    </div>
+                    <span class="name">${p.emoji} ${p.name}</span>
+                    <span class="count">${getEventCountForPerson(id)}</span>
+                </div>
+            `).join('');
+            
+            filtersEl.querySelectorAll('.filter-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const person = el.dataset.person;
+                    if (activeFilters.has(person)) {
+                        activeFilters.delete(person);
+                    } else {
+                        activeFilters.add(person);
+                    }
+                    render();
+                });
+            });
+        }
+
+        function renderDayDetail() {
+            const events = getEventsForDate(selectedDate);
+            const detailEl = document.getElementById('day-detail');
+            
+            const morningEvents = events.filter(e => {
+                const hour = parseInt(e.time?.start?.split(':')[0] || 9);
+                return hour < 12;
+            });
+            const afternoonEvents = events.filter(e => {
+                const hour = parseInt(e.time?.start?.split(':')[0] || 9);
+                return hour >= 12 && hour < 18;
+            });
+            const eveningEvents = events.filter(e => {
+                const hour = parseInt(e.time?.start?.split(':')[0] || 9);
+                return hour >= 18;
+            });
+            
+            const renderEventList = (events) => events.map(e => `
+                <div class="event-item">
+                    <div class="event-time-col">
+                        <div class="time">${e.time?.start || '—'}</div>
+                        ${e.time?.end ? `<div class="duration">até ${e.time.end}</div>` : ''}
+                    </div>
+                    <div class="event-color-bar" style="background: ${getCategoryColor(e.category)}"></div>
+                    <div class="event-content">
+                        <div class="event-title">
+                            ${e.icon} ${e.title}
+                            <span class="event-type ${e.type}">${e.type === 'recurring' ? '🔁' : '📍'}</span>
+                        </div>
+                        ${e.location ? `<div class="event-location">📍 ${e.location}</div>` : ''}
+                        <div class="event-people">
+                            ${e.people.filter(p => activeFilters.has(p)).map(p => `
+                                <span class="person-chip" style="background: ${eventsData.people[p].color}">
+                                    ${eventsData.people[p].name}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            detailEl.innerHTML = `
+                <div class="day-detail-header">
+                    <h2>${DAYS_PT[selectedDate.getDay()]}</h2>
+                    <div class="date-full">${selectedDate.getDate()} de ${MONTHS[selectedDate.getMonth()]} de ${selectedDate.getFullYear()}</div>
+                </div>
+                
+                ${events.length === 0 ? `
+                    <div class="no-events-msg">
+                        <div class="icon">📭</div>
+                        <div>Nenhum evento neste dia</div>
+                    </div>
+                ` : ''}
+                
+                ${morningEvents.length > 0 ? `
+                    <div class="time-section">
+                        <div class="time-section-header">☀️ Manhã</div>
+                        ${renderEventList(morningEvents)}
+                    </div>
+                ` : ''}
+                
+                ${afternoonEvents.length > 0 ? `
+                    <div class="time-section">
+                        <div class="time-section-header">🌤️ Tarde</div>
+                        ${renderEventList(afternoonEvents)}
+                    </div>
+                ` : ''}
+                
+                ${eveningEvents.length > 0 ? `
+                    <div class="time-section">
+                        <div class="time-section-header">🌙 Noite</div>
+                        ${renderEventList(eveningEvents)}
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function render() {
+            renderMiniCalendar();
+            renderFilters();
+            renderDayDetail();
+        }
+
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentMonth.setMonth(currentMonth.getMonth() - 1);
+            render();
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+            render();
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
